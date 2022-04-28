@@ -12,7 +12,8 @@ See the two examples below to learn how use the modules.
 
 ## Triangle scenario with no inputs
 
-This example 
+This example tries to find a local model for the GHZ distribution mixed with
+a uniform distribution with visibility v = 0.2.
 
 ```python
 import numpy as np
@@ -29,6 +30,11 @@ p = v*pGHZ + (1-v)*p0
 solution = triangle(p, c_alpha=3, c_beta=2, c_gamma=2)
 p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(solution.x, c_alpha=3, c_beta=2, c_gamma=2)
 ```
+
+After running the code above, the probability distributions of the hidden
+variables should be in the variables ``p_alpha``, ``p_beta``, ``p_gamma``, and
+the 
+
 ## References:
 
 [1]: BRANCIARD, C.; ROSSET, D.; GISIN, N.; PIRONIO, S. Bilocal versus 
