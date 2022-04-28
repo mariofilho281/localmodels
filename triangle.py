@@ -29,13 +29,13 @@ def comportamento(x, c_alpha=6, c_beta=6, c_gamma=6):
     """
     p_alpha, p_beta, p_gamma, p_a, p_b, p_c = modelo(x, c_alpha, c_beta, c_gamma)
     #Array indices for np.einsum:
-    #p_alpha: alpha = i
-    #p_beta: beta = j
-    #p_gamma: gamma = k
-    #p_a: a, beta, gamma = ljk
-    #p_b: b, gamma, alpha = mki
-    #p_c: c, alpha, beta = nij
-    #px: a, b, c = lmn
+    #   p_alpha: alpha -> i
+    #   p_beta: beta -> j
+    #   p_gamma: gamma -> k
+    #   p_a: a, beta, gamma -> ljk
+    #   p_b: b, gamma, alpha -> mki
+    #   p_c: c, alpha, beta -> nij
+    #   px: a, b, c -> lmn
     px = np.einsum('i,j,k,ljk,mki,nij->lmn',p_alpha, p_beta, p_gamma, p_a, p_b, p_c)
     return px
 

@@ -27,12 +27,12 @@ def comportamento(x, c_lambda=4, c_mu=4):
     """
     p_lambda, p_mu, p_a, p_b, p_c = modelo(x, c_lambda, c_mu)
     #Array indices for np.einsum:
-    #p_lambda: lambda = i
-    #p_mu: mu = j
-    #p_a: a, x, lambda = kli
-    #p_b: b, y, lambda, mu = mnij
-    #p_c: c, z, mu = pqj
-    #px: a, b, c, x, y, z = kmplnq
+    #   p_lambda: lambda -> i
+    #   p_mu: mu -> j
+    #   p_a: a, x, lambda -> kli
+    #   p_b: b, y, lambda, mu -> mnij
+    #   p_c: c, z, mu -> pqj
+    #   px: a, b, c, x, y, z -> kmplnq
     px = np.einsum('i,j,kli,mnij,pqj->kmplnq',p_lambda,p_mu,p_a,p_b,p_c)
     return px
 
@@ -48,14 +48,37 @@ def bilocal(p=None, Ma=2, Mb=2, Mc=2, ma=2, mb=2, mc=2, c_lambda=4, c_mu=4):
     """
     Tries to find a local model for behaviour p in the bilocal scenario.
     
-    asdflasdjçflkj
     
-    :param p: representing the behaviour to be optimized against
-    :type p: ndarray of floats and shape=(ma,mb,mc,Ma,Mb,Mc)
+    
+    :param p: the behaviour to be optimized against (default=None)
+    :type p: numpy.ndarray of floats and shape=(ma,mb,mc,Ma,Mb,Mc)
+    
     :param Ma: number of Alice's inputs (default=2)
     :type Ma: integer
     
+    :param Mb: number of Bob's inputs (default=2)
+    :type Mb: integer
     
+    :param Mc: number of Charles's inputs (default=2)
+    :type Mc: integer
+    
+    :param ma: number of Alice's outputs (default=2)
+    :type ma: integer
+    
+    :param mb: number of Bob's outputs (default=2)
+    :type mb: integer
+    
+    :param mc: number of Charles's outputs (default=2)
+    :type mc: integer
+    
+    :param c_lambda: cardinality of lambda (default=4)
+    :type c_lambda: integer
+    
+    :param c_mu: cardinality of mu (default=4)
+    :type c_mu: integer
+    
+    :return: solution to the optimization problem
+    :rtype: scipy.optimize.optimize.OptimizeResult
     """
     # -------------------------------------------- calculates p if not provided
     if p is None:
