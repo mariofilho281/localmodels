@@ -8,12 +8,43 @@ See the two examples below to learn how use the modules.
 
 ## Bilocal scenario 
 
+This example tries to find a local model for the (I,J) distribution found in 
+figure 3 of reference [1] in the bilocal scenario with binary inputs and 
+outputs.
 
+```python
+import numpy as np
+from bilocal import *
+
+a = np.arange(0,2)
+b = np.arange(0,2)
+c = np.arange(0,2)
+x = np.arange(0,2)
+y = np.arange(0,2)
+z = np.arange(0,2)
+a, b, c, x, y, z = np.meshgrid(a,b,c,x,y,z,indexing='ij')
+I = 0
+J = 1
+pI = 1/8*(1+(y==0)*(-1)**(a+b+c))
+pJ = 1/8*(1+(y==1)*(-1)**(x+z+a+b+c))
+p0 = 1/8
+p = I*pI + J*pJ + (1-I-J)*p0
+solution = bilocal(p, Ma=2, Mb=2, Mc=2, ma=2, mb=2, mc=2, c_lambda=2, c_mu=2)
+p_lambda, p_mu, p_a, p_b, p_c = model(solution.x, c_lambda=2, c_mu=2)
+```
+
+After running the code above, the probability distributions of the hidden
+variables should be in the variables ``p_lambda``, ``p_mu``, and the response
+functions of Alice, Bob and Charles should be in the variables ``p_a``, 
+``p_b``, ``p_c``. The indexing of these variables works as follows:
+
+``p_lambda[i]`` is the probability that $\lambda$ assumes the value ``i``.
 
 ## Triangle scenario with no inputs
 
 This example tries to find a local model for the GHZ distribution mixed with
-a uniform distribution with visibility v = 0.2.
+a uniform distribution with visibility v = 0.2 in the triangle scenario with no
+inputs and binary outputs.
 
 ```python
 import numpy as np
@@ -27,13 +58,14 @@ v = 0.2
 pGHZ = 1/2*(a==b)*(b==c)
 p0 = 1/8
 p = v*pGHZ + (1-v)*p0
-solution = triangle(p, c_alpha=3, c_beta=2, c_gamma=2)
+solution = triangle(p, ma=2, mb= 2, mc=2, c_alpha=3, c_beta=2, c_gamma=2)
 p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(solution.x, c_alpha=3, c_beta=2, c_gamma=2)
 ```
 
 After running the code above, the probability distributions of the hidden
 variables should be in the variables ``p_alpha``, ``p_beta``, ``p_gamma``, and
-the 
+the response functions of Alice, Bob and Charles should be in the variables
+``p_a``, ``p_b``, ``p_c``.
 
 ## References:
 
