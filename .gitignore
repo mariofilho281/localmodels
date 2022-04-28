@@ -2,6 +2,7 @@
 *.spydata
 !bilocal.py
 !triangle.py
+!dissertation.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
