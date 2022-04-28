@@ -1,9 +1,28 @@
 import numpy as np
 import scipy.optimize as opt
 
-def modelo(x, c_lambda=4, c_mu=4):
+def model(x, c_lambda=4, c_mu=4):
     """
-    ssssssss
+    Assembles hidden variables probability distributions and response functions
+    
+    This function takes the ``x`` attribute of the solution for the 
+    optimization problem solved in the function ``bilocal`` and extract the 
+    model to a more readble format.
+    
+    :param x: solution of optimization problem solved by ``bilocal``
+    :type x: numpy.ndarray of floats
+    
+    :param c_lambda: cardinality of lambda (default=4)
+    :type c_lambda: integer
+    
+    :param c_mu: cardinality of mu (default=4)
+    :type c_mu: integer
+    
+    :return: 
+        the hidden variables probability distributions ``p_lambda``, ``p_mu`` 
+        and the response functions ``p_a``, ``p_b``, ``p_c`` of Alice, Bob and
+        Charles
+    :rtype: tuple
     """
     dof = 2*c_lambda*c_mu + 3*c_lambda + 3*c_mu - 2
     p_lambda = x[0:c_lambda-1]
@@ -21,11 +40,29 @@ def modelo(x, c_lambda=4, c_mu=4):
     p_c = np.array([p_c, 1-p_c])
     return p_lambda, p_mu, p_a, p_b, p_c
 
-def comportamento(x, c_lambda=4, c_mu=4):
+def behaviour(x, c_lambda=4, c_mu=4):
     """
-    aaaaaaaaaaaa
+    Calculates the behaviour of a local model in the bilocal scenario
+    
+    This function takes the ``x`` attribute of the solution for the 
+    optimization problem solved in the function ``bilocal`` and calculates the 
+    probability distribution p(a,b,c|x,y,z) that it reproduces.
+    
+    :param x: solution of optimization problem solved by ``bilocal``
+    :type x: numpy.ndarray of floats
+    
+    :param c_lambda: cardinality of lambda (default=4)
+    :type c_lambda: integer
+    
+    :param c_mu: cardinality of mu (default=4)
+    :type c_mu: integer
+    
+    :return: 
+        the probability distribution p(a,b,c|x,y,z) indexed in the usual order,
+        i.e. p[a,b,c,x,y,z]
+    :rtype: numpy.ndarray of floats
     """
-    p_lambda, p_mu, p_a, p_b, p_c = modelo(x, c_lambda, c_mu)
+    p_lambda, p_mu, p_a, p_b, p_c = model(x, c_lambda, c_mu)
     #Array indices for np.einsum:
     #   p_lambda: lambda -> i
     #   p_mu: mu -> j
@@ -36,11 +73,33 @@ def comportamento(x, c_lambda=4, c_mu=4):
     px = np.einsum('i,j,kli,mnij,pqj->kmplnq',p_lambda,p_mu,p_a,p_b,p_c)
     return px
 
-def cost(x, p, c_lambda, c_mu):
+def cost(x, p, c_lambda=4, c_mu=4):
     """
-    fgsfsfg
+    Calculates the sum of squared errors between behaviour p and model x
+    
+    This function calculates the cost that is optimized in function 
+    ``bilocal``. Its minimum value of zero is attained when the model
+    represented by the solution ``x`` represents exactly all the probabilities 
+    of behaviour ``p``.
+    
+    :param x: array that represents an explicit bilocal model
+    :type x: numpy.ndarray of floats
+    
+    :param p: the behaviour to be optimized against
+    :type p: numpy.ndarray of floats
+    
+    :param c_lambda: cardinality of lambda (default=4)
+    :type c_lambda: integer
+    
+    :param c_mu: cardinality of mu (default=4)
+    :type c_mu: integer
+    
+    :return: 
+        sum of squared errors between probabilities ``p`` and those generated
+        by ``x``
+    :rtype: numpy.ndarray of floats
     """
-    px = comportamento(x, c_lambda=4, c_mu=4)
+    px = behaviour(x, c_lambda, c_mu)
     return np.sum((px-p)**2)
 
 
@@ -50,7 +109,7 @@ def bilocal(p=None, Ma=2, Mb=2, Mc=2, ma=2, mb=2, mc=2, c_lambda=4, c_mu=4):
     
     This function takes a user supplied probability distribution p(a,b,c|x,y,z)
     in the bilocal scenario [1] and tries to find an explicit local model with
-    given cardinalities for the hidden variables $\lambda$ and $\mu$. If a
+    given cardinalities for the hidden variables lambda and mu. If a
     probability distribution is not supplied, the function considers the
     distribution pJ in footnote 17 of [1].
     

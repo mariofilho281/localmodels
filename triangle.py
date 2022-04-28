@@ -1,9 +1,31 @@
 import numpy as np
 import scipy.optimize as opt
 
-def modelo(x, c_alpha=6, c_beta=6, c_gamma=6):
+def model(x, c_alpha=6, c_beta=6, c_gamma=6):
     """
-    asdfasçdlfkjaçdfl
+    Assembles hidden variables probability distributions and response functions
+    
+    This function takes the ``x`` attribute of the solution for the 
+    optimization problem solved in the function ``bilocal`` and extract the 
+    model to a more readble format.
+    
+    :param x: solution of optimization problem solved by ``bilocal``
+    :type x: numpy.ndarray of floats
+    
+    :param c_alpha: cardinality of alpha (default=6)
+    :type c_alpha: integer
+    
+    :param c_beta: cardinality of beta (default=6)
+    :type c_beta: integer
+    
+    :param c_gamma: cardinality of gamma (default=6)
+    :type c_gamma: integer
+    
+    :return: 
+        the hidden variables probability distributions ``p_alpha``, ``p_beta``,
+        ``p_gamma`` and the response functions ``p_a``, ``p_b``, ``p_c`` of 
+        Alice, Bob and Charles
+    :rtype: tuple
     """
     dof = c_alpha+c_beta+c_gamma-3+c_alpha*c_beta+c_beta*c_gamma+c_alpha*c_gamma
     p_alpha = x[0:c_alpha-1]
@@ -23,11 +45,32 @@ def modelo(x, c_alpha=6, c_beta=6, c_gamma=6):
     p_c = np.array([p_c, 1-p_c])
     return p_alpha, p_beta, p_gamma, p_a, p_b, p_c
 
-def comportamento(x, c_alpha=6, c_beta=6, c_gamma=6):
+def behaviour(x, c_alpha=6, c_beta=6, c_gamma=6):
     """
-    \dfsdafsdfadfg
+    Calculates the behaviour of a local model in the triangle scenario
+    
+    This function takes the ``x`` attribute of the solution for the 
+    optimization problem solved in the function ``triangle`` and calculates the
+    probability distribution p(a,b,c) that it reproduces.
+    
+    :param x: solution of optimization problem solved by ``triangle``
+    :type x: numpy.ndarray of floats
+    
+    :param c_alpha: cardinality of alpha (default=6)
+    :type c_alpha: integer
+    
+    :param c_beta: cardinality of beta (default=6)
+    :type c_beta: integer
+    
+    :param c_gamma: cardinality of gamma (default=6)
+    :type c_gamma: integer
+    
+    :return: 
+        the probability distribution p(a,b,c) indexed in the usual order,
+        i.e. p[a,b,c]
+    :rtype: numpy.ndarray of floats
     """
-    p_alpha, p_beta, p_gamma, p_a, p_b, p_c = modelo(x, c_alpha, c_beta, c_gamma)
+    p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(x, c_alpha, c_beta, c_gamma)
     #Array indices for np.einsum:
     #   p_alpha: alpha -> i
     #   p_beta: beta -> j
@@ -41,14 +84,77 @@ def comportamento(x, c_alpha=6, c_beta=6, c_gamma=6):
 
 def cost(x, p, c_alpha=6, c_beta=6, c_gamma=6):
     """
-    adfasdfasdf
+    Calculates the sum of squared errors between behaviour p and model x
+    
+    This function calculates the cost that is optimized in function 
+    ``triangle``. Its minimum value of zero is attained when the model
+    represented by the solution ``x`` represents exactly all the probabilities 
+    of behaviour ``p``.
+    
+    :param x: array that represents an explicit trilocal model
+    :type x: numpy.ndarray of floats
+    
+    :param p: the behaviour to be optimized against
+    :type p: numpy.ndarray of floats
+    
+    :param c_alpha: cardinality of alpha (default=6)
+    :type c_alpha: integer
+    
+    :param c_beta: cardinality of beta (default=6)
+    :type c_beta: integer
+    
+    :param c_gamma: cardinality of gamma (default=6)
+    :type c_gamma: integer
+    
+    :return: 
+        sum of squared errors between probabilities ``p`` and those generated
+        by ``x``
+    :rtype: numpy.ndarray of floats
     """
-    px = comportamento(x, c_alpha, c_beta, c_gamma)
+    px = behaviour(x, c_alpha, c_beta, c_gamma)
     return np.sum((px-p)**2)
 
 def triangle(p=None, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
     """
-    aasdfasdfasdf
+    Tries to find a local model for behaviour p in the triangle scenario with
+    no inputs.
+    
+    This function takes a user supplied probability distribution p(a,b,c) in
+    in the triangle scenario with no inputs [1] and tries to find an explicit 
+    local model with given cardinalities for the hidden variables alpha, beta
+    and gamma. If a probability distribution is not supplied, the function 
+    considers the GHZ distribution mixed with the uniform distribution with
+    visibility v = 0.33.
+    
+    References:
+    
+    [1]: RENOU, M.-O.; BÄUMER, E.; BOREIRI, S.; BRUNNER, N.; GISIN, N.;
+    BEIGI, S. Genuine quantum nonlocality in the triangle network. Physical 
+    review letters, APS, v. 123, n. 14, p. 140401, 2019.
+    
+    :param p: the behaviour to be optimized against (default=None)
+    :type p: numpy.ndarray of floats and shape=(ma,mb,mc,Ma,Mb,Mc)
+    
+    :param ma: number of Alice's outputs (default=2)
+    :type ma: integer
+    
+    :param mb: number of Bob's outputs (default=2)
+    :type mb: integer
+    
+    :param mc: number of Charles's outputs (default=2)
+    :type mc: integer
+    
+    :param c_alpha: cardinality of alpha (default=6)
+    :type c_alpha: integer
+    
+    :param c_beta: cardinality of beta (default=6)
+    :type c_beta: integer
+    
+    :param c_gamma: cardinality of gamma (default=6)
+    :type c_gamma: integer
+    
+    :return: solution to the optimization problem
+    :rtype: scipy.optimize.optimize.OptimizeResult
     """
     # -------------------------------------------- calculates p if not provided
     if p is None:
