@@ -12,8 +12,9 @@ See the two examples below to learn how use the modules.
 
 ## Triangle scenario with no inputs
 
+This example 
 
-```pycon
+```python
 import numpy as np
 from triangle import *
 
@@ -26,13 +27,7 @@ pGHZ = 1/2*(a==b)*(b==c)
 p0 = 1/8
 p = v*pGHZ + (1-v)*p0
 solution = triangle(p, c_alpha=3, c_beta=2, c_gamma=2)
-solution = triangle(p, c_alpha=3, c_beta=2, c_gamma=2)
-p_alpha, p_beta, p_gamma, p_a, p_b, p_c = modelo(solution.x, c_alpha=3, c_beta=2, c_gamma=2)
 p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(solution.x, c_alpha=3, c_beta=2, c_gamma=2)
-p_alpha
-p_beta
-p_gamma
-print(p_alpha)
 ```
 ## References:
 
