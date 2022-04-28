@@ -12,6 +12,8 @@ See the two examples below to learn how use the modules.
 
 ## Triangle scenario with no inputs
 
+
+```pycon
 import numpy as np
 from triangle import *
 
@@ -31,7 +33,7 @@ p_alpha
 p_beta
 p_gamma
 print(p_alpha)
-
+```
 ## References:
 
 [1]: BRANCIARD, C.; ROSSET, D.; GISIN, N.; PIRONIO, S. Bilocal versus 
