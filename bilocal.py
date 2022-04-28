@@ -48,7 +48,17 @@ def bilocal(p=None, Ma=2, Mb=2, Mc=2, ma=2, mb=2, mc=2, c_lambda=4, c_mu=4):
     """
     Tries to find a local model for behaviour p in the bilocal scenario.
     
+    This function takes a user supplied probability distribution p(a,b,c|x,y,z)
+    in the bilocal scenario [1] and tries to find an explicit local model with
+    given cardinalities for the hidden variables $\lambda$ and $\mu$. If a
+    probability distribution is not supplied, the function considers the
+    distribution pJ in footnote 17 of [1].
     
+    References:
+    
+    [1]: BRANCIARD, C.; ROSSET, D.; GISIN, N.; PIRONIO, S. Bilocal versus 
+    nonbilocal correlations in entanglement-swapping experiments. Physical 
+    Review A, APS, v. 85, n. 3, p. 032119, 2012.
     
     :param p: the behaviour to be optimized against (default=None)
     :type p: numpy.ndarray of floats and shape=(ma,mb,mc,Ma,Mb,Mc)
