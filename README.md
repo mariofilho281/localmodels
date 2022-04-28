@@ -38,7 +38,14 @@ variables should be in the variables ``p_lambda``, ``p_mu``, and the response
 functions of Alice, Bob and Charles should be in the variables ``p_a``, 
 ``p_b``, ``p_c``. The indexing of these variables works as follows:
 
-``p_lambda[i]`` is the probability that $\lambda$ assumes the value ``i``.
+``p_lambda[i]`` is the probability that lambda assumes the value ``i``.
+``p_mu[i]`` is the probability that mu assumes the value ``i``.
+``p_a[i,j,k]`` is the probability that Alice outputs value ``i``, given that
+she receives x=``j`` and lambda=``k``.
+``p_b[i,j,k,l]`` is the probability that Bob outputs value ``i``, given that
+he receives y=``j``, lambda=``k`` and mu=``l``.
+``p_c[i,j,k]`` is the probability that Charles outputs value ``i``, given that
+he receives z=``j`` and mu=``k``.
 
 ## Triangle scenario with no inputs
 
