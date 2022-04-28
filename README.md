@@ -39,18 +39,22 @@ functions of Alice, Bob and Charles should be in the variables ``p_a``,
 ``p_b``, ``p_c``. The indexing of these variables works as follows:
 
 ``p_lambda[i]`` is the probability that lambda assumes the value ``i``.
+
 ``p_mu[i]`` is the probability that mu assumes the value ``i``.
+
 ``p_a[i,j,k]`` is the probability that Alice outputs value ``i``, given that
 she receives x=``j`` and lambda=``k``.
+
 ``p_b[i,j,k,l]`` is the probability that Bob outputs value ``i``, given that
 he receives y=``j``, lambda=``k`` and mu=``l``.
+
 ``p_c[i,j,k]`` is the probability that Charles outputs value ``i``, given that
 he receives z=``j`` and mu=``k``.
 
 ## Triangle scenario with no inputs
 
 This example tries to find a local model for the GHZ distribution mixed with
-a uniform distribution with visibility v = 0.2 in the triangle scenario with no
+a uniform distribution with visibility v = 0.33 in the triangle scenario with no
 inputs and binary outputs.
 
 ```python
@@ -61,7 +65,7 @@ a = np.arange(0,2)
 b = np.arange(0,2)
 c = np.arange(0,2)
 a, b, c = np.meshgrid(a,b,c,indexing='ij')
-v = 0.2
+v = 0.33
 pGHZ = 1/2*(a==b)*(b==c)
 p0 = 1/8
 p = v*pGHZ + (1-v)*p0
@@ -72,7 +76,22 @@ p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(solution.x, c_alpha=3, c_beta=2,
 After running the code above, the probability distributions of the hidden
 variables should be in the variables ``p_alpha``, ``p_beta``, ``p_gamma``, and
 the response functions of Alice, Bob and Charles should be in the variables
-``p_a``, ``p_b``, ``p_c``.
+``p_a``, ``p_b``, ``p_c``. The indexing of these variables works as follows:
+
+``p_alpha[i]`` is the probability that alpha assumes the value ``i``.
+
+``p_beta[i]`` is the probability that beta assumes the value ``i``.
+
+``p_gamma[i]`` is the probability that gamma assumes the value ``i``.
+
+``p_a[i,j,k]`` is the probability that Alice outputs value ``i``, given that
+she receives beta=``j`` and gamma=``k``.
+
+``p_b[i,j,k]`` is the probability that Bob outputs value ``i``, given that
+he receives gamma=``j``, alpha=``k``.
+
+``p_c[i,j,k]`` is the probability that Charles outputs value ``i``, given that
+he receives alpha=``j`` and beta=``k``.
 
 ## References:
 
