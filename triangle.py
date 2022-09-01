@@ -45,7 +45,7 @@ def model(x, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
     
     p_c = np.zeros(shape=(mc,c_alpha,c_beta))
     p_c[0:mc-1,:,:] = np.reshape(x[c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha:dof],(mc-1,c_alpha,c_beta))
-    p_c[mc-1,:,:] = 1-np.sum(p_c[0:mc-1,:,:])
+    p_c[mc-1,:,:] = 1-np.sum(p_c[0:mc-1,:,:], axis=0)
     return p_alpha, p_beta, p_gamma, p_a, p_b, p_c
 
 def behaviour(x, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
