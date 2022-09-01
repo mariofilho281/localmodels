@@ -1,15 +1,15 @@
 import numpy as np
 import scipy.optimize as opt
 
-def model(x, c_alpha=6, c_beta=6, c_gamma=6):
+def model(x, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
     """
     Assembles hidden variables probability distributions and response functions
     
     This function takes the ``x`` attribute of the solution for the 
-    optimization problem solved in the function ``bilocal`` and extract the 
+    optimization problem solved in the function ``triangle`` and extract the 
     model to a more readble format.
     
-    :param x: solution of optimization problem solved by ``bilocal``
+    :param x: solution of optimization problem solved by ``triangle``
     :type x: numpy.ndarray of floats
     
     :param c_alpha: cardinality of alpha (default=6)
@@ -27,25 +27,28 @@ def model(x, c_alpha=6, c_beta=6, c_gamma=6):
         Alice, Bob and Charles
     :rtype: tuple
     """
-    dof = c_alpha+c_beta+c_gamma-3+c_alpha*c_beta+c_beta*c_gamma+c_alpha*c_gamma
+    dof = c_alpha+c_beta+c_gamma-3+c_alpha*c_beta*(mc-1)+c_beta*c_gamma*(ma-1)+c_alpha*c_gamma*(mb-1)
     p_alpha = x[0:c_alpha-1]
     p_alpha = np.concatenate((p_alpha,[1-np.sum(p_alpha)]))
     p_beta = x[c_alpha-1:c_alpha+c_beta-2]
     p_beta = np.concatenate((p_beta,[1]-np.sum(p_beta)))
     p_gamma = x[c_alpha+c_beta-2:c_alpha+c_beta+c_gamma-3]
     p_gamma = np.concatenate((p_gamma,[1-np.sum(p_gamma)]))
-    p_a = x[c_alpha+c_beta+c_gamma-3:c_alpha+c_beta+c_gamma-3+c_beta*c_gamma]
-    p_a = np.reshape(p_a, (c_beta,c_gamma))
-    p_a = np.array([p_a, 1-p_a])
-    p_b = x[c_alpha+c_beta+c_gamma-3+c_beta*c_gamma:c_alpha+c_beta+c_gamma-3+c_beta*c_gamma+c_alpha*c_gamma]
-    p_b = np.reshape(p_b, (c_gamma,c_alpha))
-    p_b = np.array([p_b, 1-p_b])
-    p_c = x[c_alpha+c_beta+c_gamma-3+c_beta*c_gamma+c_alpha*c_gamma:dof]
-    p_c = np.reshape(p_c, (c_alpha,c_beta))
-    p_c = np.array([p_c, 1-p_c])
+    
+    p_a = np.zeros(shape=(ma,c_beta,c_gamma))
+    p_a[0:ma-1,:,:] = np.reshape(x[c_alpha+c_beta+c_gamma-3:c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma],(ma-1,c_beta,c_gamma))
+    p_a[ma-1,:,:] = 1-np.sum(p_a[0:ma-1,:,:], axis=0)
+
+    p_b = np.zeros(shape=(mb,c_gamma,c_alpha))
+    p_b[0:mb-1,:,:] = np.reshape(x[c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma:c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha],(mb-1,c_gamma,c_alpha))
+    p_b[mb-1,:,:] = 1-np.sum(p_b[0:mb-1,:,:], axis=0)
+    
+    p_c = np.zeros(shape=(mc,c_alpha,c_beta))
+    p_c[0:mc-1,:,:] = np.reshape(x[c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha:dof],(mc-1,c_alpha,c_beta))
+    p_c[mc-1,:,:] = 1-np.sum(p_c[0:mc-1,:,:])
     return p_alpha, p_beta, p_gamma, p_a, p_b, p_c
 
-def behaviour(x, c_alpha=6, c_beta=6, c_gamma=6):
+def behaviour(x, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
     """
     Calculates the behaviour of a local model in the triangle scenario
     
@@ -70,7 +73,7 @@ def behaviour(x, c_alpha=6, c_beta=6, c_gamma=6):
         i.e. p[a,b,c]
     :rtype: numpy.ndarray of floats
     """
-    p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(x, c_alpha, c_beta, c_gamma)
+    p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(x, ma, mb, mc, c_alpha, c_beta, c_gamma)
     #Array indices for np.einsum:
     #   p_alpha: alpha -> i
     #   p_beta: beta -> j
@@ -82,7 +85,7 @@ def behaviour(x, c_alpha=6, c_beta=6, c_gamma=6):
     px = np.einsum('i,j,k,ljk,mki,nij->lmn',p_alpha, p_beta, p_gamma, p_a, p_b, p_c)
     return px
 
-def cost(x, p, c_alpha=6, c_beta=6, c_gamma=6):
+def cost(x, p, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
     """
     Calculates the sum of squared errors between behaviour p and model x
     
@@ -111,7 +114,7 @@ def cost(x, p, c_alpha=6, c_beta=6, c_gamma=6):
         by ``x``
     :rtype: numpy.ndarray of floats
     """
-    px = behaviour(x, c_alpha, c_beta, c_gamma)
+    px = behaviour(x, ma, mb, mc, c_alpha, c_beta, c_gamma)
     return np.sum((px-p)**2)
 
 def triangle(p=None, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
@@ -167,19 +170,22 @@ def triangle(p=None, ma=2, mb=2, mc=2, c_alpha=6, c_beta=6, c_gamma=6):
         p0 = 1/8
         p = v*pGHZ + (1-v)*p0
     # -------------------------------------------------------------------------
-    dof = c_alpha+c_beta+c_gamma-3+c_alpha*c_beta+c_beta*c_gamma+c_alpha*c_gamma
+    dof = c_alpha+c_beta+c_gamma-3+c_alpha*c_beta*(mc-1)+c_beta*c_gamma*(ma-1)+c_alpha*c_gamma*(mb-1)
     rng = np.random.default_rng()
     bounds = opt.Bounds(np.zeros(dof), np.ones(dof))
-    coeffs = np.zeros(shape=(3,dof))
+    coeffs = np.zeros(shape=(3+c_beta*c_gamma+c_gamma*c_alpha+c_alpha*c_beta,dof))
     coeffs[0,0:c_alpha-1] = 1
     coeffs[1,c_alpha-1:c_alpha+c_beta-2] = 1
     coeffs[2,c_alpha+c_beta-2:c_alpha+c_beta+c_gamma-3] = 1
-    linear_constraints = opt.LinearConstraint(coeffs, -np.inf*np.ones(3), np.ones(3))
+    coeffs[3:3+c_beta*c_gamma,c_alpha+c_beta+c_gamma-3:c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma] = np.tile(np.eye(c_beta*c_gamma),ma-1)
+    coeffs[3+c_beta*c_gamma:3+c_beta*c_gamma+c_gamma*c_alpha,c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma:c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha] = np.tile(np.eye(c_gamma*c_alpha),mb-1)
+    coeffs[3+c_beta*c_gamma+c_gamma*c_alpha:3+c_beta*c_gamma+c_gamma*c_alpha+c_alpha*c_beta,c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha:c_alpha+c_beta+c_gamma-3+(ma-1)*c_beta*c_gamma+(mb-1)*c_gamma*c_alpha+(mc-1)*c_alpha*c_beta] = np.tile(np.eye(c_alpha*c_beta),mc-1)
+    linear_constraints = opt.LinearConstraint(coeffs, -np.inf*np.ones(3+c_beta*c_gamma+c_gamma*c_alpha+c_alpha*c_beta), np.ones(3+c_beta*c_gamma+c_gamma*c_alpha+c_alpha*c_beta))
     x0 = rng.random(size=dof)
     x0[0:c_alpha-1] = 1/c_alpha
     x0[c_alpha-1:c_alpha+c_beta-2] = 1/c_beta
     x0[c_alpha+c_beta-2:c_alpha+c_beta+c_gamma-3] = 1/c_gamma
-    solution = opt.minimize(cost, x0, args=(p, c_alpha, c_beta, c_gamma), 
+    solution = opt.minimize(cost, x0, args=(p, ma, mb, mc, c_alpha, c_beta, c_gamma), 
                             method='trust-constr', 
                             constraints=linear_constraints, 
                             options={'verbose': 1}, bounds=bounds)
