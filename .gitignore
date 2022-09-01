@@ -1,5 +1,6 @@
 *.py
 *.spydata
+token.txt
 !bilocal.py
 !triangle.py
 !dissertation.pdf
