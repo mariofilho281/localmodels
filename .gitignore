@@ -1,5 +1,13 @@
 *.py
 *.spydata
+*.npy
+*.npz
+*.hdf5
+*.ipynb
+*.png
+*.lnk
+*.xopp
+requirements.txt
 token.txt
 !bilocal.py
 !triangle.py

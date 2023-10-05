@@ -53,30 +53,36 @@ he receives z=``j`` and mu=``k``.
 
 ## Triangle scenario with no inputs
 
-This example tries to find a local model for the GHZ distribution mixed with
-a uniform distribution with visibility v = 0.33 in the triangle scenario with no
-inputs and binary outputs.
+For the triangle scenario, the class ``TrilocalModel`` implements a bunch of 
+cool functionalities such as model optimization, relabelling of hidden variables
+or outputs, exchange of parties and hidden variable cardinality reduction. If
+you are interested in using all that, I recommend you read the docstrings for
+the class methods.
+
+For a quick introduction the following example tries to find a local model for 
+the GHZ distribution mixed with a uniform distribution with visibility v = 0.33 
+in the triangle scenario with no inputs and binary outputs. The hidden variable 
+cardinalities are (3, 2, 2).
 
 ```python
 import numpy as np
-from triangle import *
+from triangle import TrilocalModel
 
-a = np.arange(0,2)
-b = np.arange(0,2)
-c = np.arange(0,2)
-a, b, c = np.meshgrid(a,b,c,indexing='ij')
 v = 0.33
-pGHZ = 1/2*(a==b)*(b==c)
+pGHZ = np.zeros((2, 2, 2))
+pGHZ[0, 0, 0] = pGHZ[1, 1, 1] = 1/2
 p0 = 1/8
 p = v*pGHZ + (1-v)*p0
-solution = triangle(p, ma=2, mb= 2, mc=2, c_alpha=3, c_beta=2, c_gamma=2)
-p_alpha, p_beta, p_gamma, p_a, p_b, p_c = model(solution.x, c_alpha=3, c_beta=2, c_gamma=2)
+model = TrilocalModel.uniform(c_alpha=3, c_beta=2, c_gamma=2, ma=2, mb=2, mc=2)
+model = model.optimize(p, number_of_trials=10)
+print(model)
 ```
 
 After running the code above, the probability distributions of the hidden
-variables should be in the variables ``p_alpha``, ``p_beta``, ``p_gamma``, and
-the response functions of Alice, Bob and Charles should be in the variables
-``p_a``, ``p_b``, ``p_c``. The indexing of these variables works as follows:
+variables should be in the attributes ``model.p_alpha``, ``model.p_beta``, 
+``model.p_gamma``, and the response functions of Alice, Bob and Charles should 
+be in the attributes ``model.p_a``, ``model.p_b``, ``model.p_c``. The indexing 
+of these attributes works as follows:
 
 ``p_alpha[i]`` is the probability that alpha assumes the value ``i``.
 
