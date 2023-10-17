@@ -3,6 +3,18 @@ import scipy.optimize as opt
 
 
 class TrilocalModel:
+    """
+    Possible signatures:
+    TrilocalModel(p_alpha, p_beta, p_gamma, p_a, p_b, p_c)
+    TrilocalModel(c_alpha, c_beta, c_gamma, ma, mb,mc, x)
+
+    Constructs a trilocal model either:
+    i) from the hidden variable distributions ``p_alpha``, ``p_beta``,
+    ``p_gamma`` and response functions ``p_a``, ``p_b``, ``p_c``, or;
+    ii) from the hidden variable cardinalities ``c_alpha``, ``c_beta``,
+    ``c_gamma``, output cardinalities ``m_a``, ``m_b``, ``m_c`` and array
+    of free parameters ``x``.
+    """
     def __init__(self, *args):
         """
         Possible signatures:
@@ -228,24 +240,24 @@ class TrilocalModel:
                                                   -np.inf * np.ones(row_c),
                                                   np.ones(row_c))
         if initial_guess is None:
-            initial_guess = TrilocalModel\
-                .random(self.c_alpha, self.c_beta, self.c_gamma, self.ma,
-                        self.mb, self.mc).optimizer_representation()
+            x0 = TrilocalModel.random(self.c_alpha, self.c_beta, self.c_gamma,
+                                      self.ma, self.mb, self.mc).\
+                optimizer_representation()
+        else:
+            x0 = initial_guess
         # ----------------------------------------------------------------------
         optimized_model = self
-        error = self.cost(p)
+        error = np.sqrt(self.cost(p)/(self.ma * self.mb * self.mc))
         for i in range(number_of_trials):
+            print(f'Trial {i+1}:')
             solution = opt.minimize(TrilocalModel.cost_for_optimizer,
-                                    initial_guess,
+                                    x0,
                                     args=(p, self.c_alpha, self.c_beta,
                                           self.c_gamma, self.ma, self.mb,
                                           self.mc),
                                     method='trust-constr',
                                     constraints=linear_constraints,
                                     options={'verbose': 1}, bounds=bounds)
-            initial_guess = TrilocalModel\
-                .random(self.c_alpha, self.c_beta, self.c_gamma,
-                        self.ma, self.mb, self.mc).optimizer_representation()
             partial_model = TrilocalModel(self.c_alpha, self.c_beta,
                                           self.c_gamma, self.ma, self.mb,
                                           self.mc, solution.x)
@@ -256,6 +268,9 @@ class TrilocalModel:
                 error = partial_error
             if partial_error < tol:
                 break
+            x0 = TrilocalModel.random(self.c_alpha, self.c_beta, self.c_gamma,
+                                      self.ma, self.mb, self.mc). \
+                optimizer_representation()
         return optimized_model
 
     def relabel_hidden_variable(self, variable, new_labels):
