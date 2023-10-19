@@ -69,12 +69,7 @@ class TrilocalModel:
         else:
             raise ValueError(f'Either 6 or 7 arguments expected. '
                              f'Got {len(args)} argument(s) instead.')
-        self.c_alpha = len(self.p_alpha)
-        self.c_beta = len(self.p_beta)
-        self.c_gamma = len(self.p_gamma)
-        self.ma = self.p_a.shape[0]
-        self.mb = self.p_b.shape[0]
-        self.mc = self.p_c.shape[0]
+        self.update_cardinalities()
 
     def __str__(self):
         """
@@ -109,8 +104,12 @@ class TrilocalModel:
         Return tuple with hidden variable cardinalities ``c_alpha``,
         ``c_beta``, ``c_gamma`` and output cardinalities ``ma``, ``mb``, ``mc``.
         """
-        return (self.c_alpha, self.c_beta, self.c_gamma,
-                self.ma, self.mb, self.mc)
+        return (len(self.p_alpha), len(self.p_beta), len(self.p_gamma),
+                self.p_a.shape[0], self.p_b.shape[0], self.p_c.shape[0])
+
+    def update_cardinalities(self):
+        self.c_alpha, self.c_beta, self.c_gamma, self.ma, self.mb, self.mc = \
+            self.cardinalities()
 
     def degrees_of_freedom(self):
         """
@@ -158,9 +157,9 @@ class TrilocalModel:
         cardinalities ``c_alpha``, ``c_beta``, ``c_gamma``, ``ma``, ``mb``,
         ``mc``.
         """
-        p_alpha = 1 / c_alpha * np.ones((c_alpha,))
-        p_beta = 1 / c_beta * np.ones((c_beta,))
-        p_gamma = 1 / c_gamma * np.ones((c_gamma,))
+        p_alpha = 1 / c_alpha * np.ones(c_alpha)
+        p_beta = 1 / c_beta * np.ones(c_beta)
+        p_gamma = 1 / c_gamma * np.ones(c_gamma)
         p_a = 1 / ma * np.ones((ma, c_beta, c_gamma))
         p_b = 1 / mb * np.ones((mb, c_gamma, c_alpha))
         p_c = 1 / mc * np.ones((mc, c_alpha, c_beta))
@@ -249,7 +248,7 @@ class TrilocalModel:
         optimized_model = self
         error = np.sqrt(self.cost(p)/(self.ma * self.mb * self.mc))
         for i in range(number_of_trials):
-            print(f'Trial {i+1}:')
+            print(f'Trial {i+1}. ', end='')
             solution = opt.minimize(TrilocalModel.cost_for_optimizer,
                                     x0,
                                     args=(p, self.c_alpha, self.c_beta,
@@ -317,6 +316,7 @@ class TrilocalModel:
             self.p_gamma = self.p_gamma / self.p_gamma.sum()
             self.p_a = np.delete(self.p_a, labels, axis=2)
             self.p_b = np.delete(self.p_b, labels, axis=1)
+        self.update_cardinalities()
 
     def relabel_output(self, party, new_labels):
         """
@@ -354,6 +354,7 @@ class TrilocalModel:
             self.p_a, self.p_c = (self.p_c.swapaxes(1, 2),
                                   self.p_a.swapaxes(1, 2))
             self.p_b = self.p_b.swapaxes(1, 2)
+        self.update_cardinalities()
 
     def exchange_parties(self, party1, party2):
         """
@@ -368,22 +369,20 @@ class TrilocalModel:
         descending order. Also, if the exchange of parties is allowed, reorder
         hidden variables so that c_alpha >= c_beta >= c_gamma.
         """
-        c_alpha, c_beta, c_gamma, ma, mb, mc = self.cardinalities()
         # Rearrange hidden variables in descending cardinalities
         if exchange_parties_allowed:
-            order_alpha, order_beta, order_gamma = np.argsort((c_alpha, c_beta,
-                                                               c_gamma))
-            if (order_alpha, order_beta, order_gamma) == (0, 1, 2):  # a b c
+            sorted_variables = self.sort_hidden_variables()
+            if sorted_variables == (0, 1, 2):  # a b c
                 self.exchange_hidden_variables(0, 2)
-            elif (order_alpha, order_beta, order_gamma) == (0, 2, 1):  # a c b
+            elif sorted_variables == (0, 2, 1):  # a c b
                 self.exchange_hidden_variables(0, 1)
                 self.exchange_hidden_variables(1, 2)
-            elif (order_alpha, order_beta, order_gamma) == (1, 0, 2):  # b a c
+            elif sorted_variables == (1, 0, 2):  # b a c
                 self.exchange_hidden_variables(0, 2)
                 self.exchange_hidden_variables(1, 2)
-            elif (order_alpha, order_beta, order_gamma) == (1, 2, 0):  # b c a
+            elif sorted_variables == (1, 2, 0):  # b c a
                 self.exchange_hidden_variables(1, 2)
-            elif (order_alpha, order_beta, order_gamma) == (2, 0, 1):  # c a b
+            elif sorted_variables == (2, 0, 1):  # c a b
                 self.exchange_hidden_variables(0, 1)
         # Rearrange hidden variable labels in descending probabilities
         self.relabel_hidden_variable(0, np.argsort(-self.p_alpha))
@@ -397,3 +396,26 @@ class TrilocalModel:
         self.remove_hidden_variable_labels(0, self.p_alpha < tol)
         self.remove_hidden_variable_labels(1, self.p_beta < tol)
         self.remove_hidden_variable_labels(2, self.p_gamma < tol)
+
+    def sort_hidden_variables(self):
+        """
+        Return indices that would sort the hidden variables with respect to
+        their cardinalities (0 represents alpha, 1 represents beta, 2
+        represents gamma). In case the variables have the same cardinalities,
+        the sorting is done with respect to information entropy.
+        """
+        # I have looked for function f(c,s) (c is the cardinality and s is
+        # the entropy) satisfying the following properties:
+        # c1 > c2 -> f(c1,s1) > f(c2,s2)
+        # s1 > s2 -> f(c,s1) > f(c,s2)
+        # Any function satisfying these could be used to sort the hidden
+        # variables in the way we need. One such function is
+        # f(c,s) = c + tanh(s), so that is what I use in the code below.
+        s_alpha, s_beta, s_gamma = self.hidden_variable_entropies()
+        return tuple(np.argsort((self.c_alpha + np.tanh(s_alpha),
+                                 self.c_beta + np.tanh(s_beta),
+                                 self.c_gamma + np.tanh(s_gamma))))
+
+    def hidden_variable_entropies(self):
+        return ((-p*np.log2(p)).sum() for p in (self.p_alpha, self.p_beta,
+                                                self.p_gamma))
